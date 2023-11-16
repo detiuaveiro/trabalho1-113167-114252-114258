@@ -13,5 +13,3 @@ void error(int status, int errnum, const char *message, ...);
 
 #endif
 
-
-// lol
