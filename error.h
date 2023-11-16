@@ -12,3 +12,6 @@ extern char *program_name;
 void error(int status, int errnum, const char *message, ...);
 
 #endif
+
+
+// lol
