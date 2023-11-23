@@ -610,36 +610,21 @@ void ImageBlur(Image img, int dx, int dy) { ///
   // Insert your code here!
   assert(img!=NULL);
   assert(dx>=0 && dy>=0);
-  uint8 mean = 0;
-  int counter = 0;
-  Image newimg = ImageCreate(ImageWidth(img),ImageHeight(img),ImageMaxval(img));
-  for(int i = 0;i<ImageHeight(img);i++){
-    for(int j = 0;j<ImageWidth(img);j++){
-      mean = 0;
-      counter = 0;
-      for (int k = i-dy; k<=i+dy; k++){
-        for (int l = j-dx; l<= j+dx;l++){
-          if(k>= 0 && k<ImageHeight(img)){            //ver
-            if(l>= 0 && l<ImageWidth(img)){
-              mean += ImageGetPixel(img,l,k);
-              counter++;
-            }
+  int i,j;
+  for(i = 0;i<ImageHeight(img);i++){
+    for(j = 0;j<ImageWidth(img);j++){
+      int sum = 0;
+      int count = 0;
+      for(int k = -dx;k<=dx;k++){
+        for(int l = -dy;l<=dy;l++){
+          if(ImageValidPos(img,j+k,i+l)){
+            sum += ImageGetPixel(img,j+k,i+l);
+            count++;
           }
         }
       }
-      if(round(mean/counter)>ImageMaxval(img)){
-        ImageSetPixel(newimg,j,i,ImageMaxval(img));
-      }else{
-        ImageSetPixel(newimg,j,i,round(mean/counter));
-      }
-    }
-  
-  }
-  for(int i = 0;i<ImageHeight(img);i++){
-    for(int j = 0;j<ImageWidth(img);j++){
-      ImageSetPixel(img,j,i,ImageGetPixel(newimg,j,i));
+      ImageSetPixel(img,j,i,round(sum/count));   //funciona
     }
   }
-  ImageDestroy(&newimg);
-}
+ }
 
