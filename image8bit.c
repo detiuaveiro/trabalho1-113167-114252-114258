@@ -11,7 +11,7 @@
 
 // Student authors (fill in below):
 // NMec:  Name:
-// 
+// 113167 Gabriel Oliveira
 // 
 // 
 // Date:
@@ -19,6 +19,7 @@
 
 #include "image8bit.h"
 
+#include <math.h>
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -173,7 +174,7 @@ Image ImageCreate(int width, int height, uint8 maxval) { ///
   assert (0 < maxval && maxval <= PixMax);
   // Insert your code here!
   Image img = (Image)malloc(sizeof(Image));    // Allocates space for an image.
-  if(!check(img != NULL,"Image allocation failed")){free(img); return NULL;}  // Returns NULL and frees img if memory allocation fails.
+  if(!check(img != NULL,"Image allocation failed")){free(img); return NULL;}  // Returns NULL and frees memory alocated img if memory allocation fails.
   img->width = width;
   img->height = height;
   img->maxval = maxval;
@@ -347,7 +348,8 @@ int ImageValidRect(Image img, int x, int y, int w, int h) { ///
 static inline int G(Image img, int x, int y) {
   int index;
   // Insert your code here!
-  index = (y * ImageWidth(img))+x;
+  index = (y * ImageWidth(img))+x;  //  To get to the values that have height y we need to pass through the previous rows 
+                                    //  (y*image width) then sum the position of the pixel in that row x
   assert (0 <= index && index < ImageWidth(img)*ImageHeight(img));
   return index;
 }
@@ -384,7 +386,7 @@ void ImageNegative(Image img) { ///
   assert (img != NULL);
   // Insert your code here!
   for(int i = 0; i<ImageHeight(img)*ImageWidth(img);i++){
-    if((img->pixel[i]<(img->maxval)/2) || (img->pixel[i]>(img->maxval)/2)){  //funciona
+    if((img->pixel[i]<(img->maxval)/2) || (img->pixel[i]>(img->maxval)/2)){  //  Checks if the pixel is darker or lighter than the mid pixel level in the range(0,maxval) and subtracts the pixel value to the maxvalue.
       img->pixel[i]=(img->maxval) - (img->pixel[i]);
     }
   }
@@ -396,7 +398,7 @@ void ImageNegative(Image img) { ///
 void ImageThreshold(Image img, uint8 thr) { ///
   assert (img != NULL);
   // Insert your code here!
-  for(int i = 0;i<ImageHeight(img)*ImageWidth(img);i++){  //funciona
+  for(int i = 0;i<ImageHeight(img)*ImageWidth(img);i++){ 
     if(img->pixel[i]<thr){
       img->pixel[i] = 0;
     }
@@ -414,9 +416,10 @@ void ImageBrighten(Image img, double factor) { ///
   assert (img != NULL);
   assert (factor >= 0.0);
   // Insert your code here!
-  for(int i = 0;i<ImageHeight(img)*ImageWidth(img);i++){  //funciona
-    if((img->pixel[i])*(factor)<= ImageMaxval(img)){
-      img->pixel[i] = (img->pixel[i])*(factor);
+  for(int i = 0;i<ImageHeight(img)*ImageWidth(img);i++){  // Multiplies each pixel value by the factor, if the pixel values is bigger than the maxvalue set the pixel level to the maxvalue
+    int new_pixel = roundf((img->pixel[i])*(factor));
+    if(new_pixel<= ImageMaxval(img)){
+      img->pixel[i] = (new_pixel);
     }else{
       img->pixel[i] = ImageMaxval(img);
     }
@@ -468,9 +471,9 @@ Image ImageRotate(Image img) { ///
 Image ImageMirror(Image img) { ///
   assert (img != NULL);
   // Insert your code here!
-  Image newimg = ImageCreate(ImageHeight(img),ImageHeight(img),ImageMaxval(img)); //funciona
+  Image newimg = ImageCreate(ImageHeight(img),ImageHeight(img),ImageMaxval(img)); // Allocates space for a new image to store the mirrored image
   int x,y;
-  for(y = 0;y<ImageHeight(newimg);y++){
+  for(y = 0;y<ImageHeight(newimg);y++){       // Inverts each row of pixels switching the pixel values from the left most part of the row with the ones in the right most part
     for(x = 0;x<ImageWidth(newimg);x++){
       ImageSetPixel(newimg,((ImageWidth(newimg)-1)-x),y,ImageGetPixel(img,x,y));
     }
@@ -494,11 +497,11 @@ Image ImageCrop(Image img, int x, int y, int w, int h) { ///
   assert (img != NULL);
   assert (ImageValidRect(img, x, y, w, h));
   // Insert your code here!
-  Image newimg = ImageCreate(w,h,ImageMaxval(img));
+  Image newimg = ImageCreate(w,h,ImageMaxval(img)); //  Allocates memory a new image with dimensions wxh to store the cropped image
   int i,j;
   for(i = 0;i<ImageHeight(newimg);i++){
     for(j = 0;j<ImageWidth(newimg);j++){
-      ImageSetPixel(newimg,j,i,ImageGetPixel(img,x+j,y+i)); //funciona
+      ImageSetPixel(newimg,j,i,ImageGetPixel(img,x+j,y+i)); // Finds the pixel in the coordinates (x,y) and then copies the levels of those pixels to the new image until it reaches pixel (x+w,y+h)
     }
   }
   return newimg;
@@ -535,8 +538,19 @@ void ImageBlend(Image img1, int x, int y, Image img2, double alpha) { ///
   assert (img2 != NULL);
   assert (ImageValidRect(img1, x, y, img2->width, img2->height));   //ver
   // Insert your code here!
-  ImageBrighten(img2,alpha);
-  ImagePaste(img1,x,y,img2);
+  int i,j;
+  for(j=0;j<ImageHeight(img2);j++){
+    for(i = 0;i<ImageWidth(img2);i++){
+      double pixel1 = ImageGetPixel(img2,i,j)*(alpha);
+      double pixel2 = ImageGetPixel(img1,x+i,j+y)*(1-alpha);
+      int new_pixel = round(pixel1+pixel2);
+      if(new_pixel<=ImageMaxval(img1)){
+        ImageSetPixel(img1,x+i,y+j,new_pixel);
+      }else{
+        ImageSetPixel(img1,x+i,y+j,ImageMaxval(img1));
+      }    //funciona
+    }
+  }
 }
 
 /// Compare an image to a subimage of a larger image.
@@ -568,15 +582,13 @@ int ImageLocateSubImage(Image img1, int* px, int* py, Image img2) { ///
   assert (img1 != NULL);
   assert (img2 != NULL);
   // Insert your code here!
-  //int i  = 0;
   int i,j;
   for(i = 0;i<ImageHeight(img2);i++){
     for(j = 0;j<ImageWidth(img2);j++){
       if(ImageGetPixel(img1,j,i)==ImageGetPixel(img2,0,0)){     //funciona
         if(ImageMatchSubImage(img1,j,i,img2)==1){
-          px = j;
-          py = i;
-          printf("%d\n%d",j,i);
+          *px = j;
+          *py = i;
           return 1;
         }else{
           continue;
@@ -597,27 +609,37 @@ int ImageLocateSubImage(Image img1, int* px, int* py, Image img2) { ///
 void ImageBlur(Image img, int dx, int dy) { ///
   // Insert your code here!
   assert(img!=NULL);
+  assert(dx>=0 && dy>=0);
   uint8 mean = 0;
+  int counter = 0;
+  Image newimg = ImageCreate(ImageWidth(img),ImageHeight(img),ImageMaxval(img));
   for(int i = 0;i<ImageHeight(img);i++){
     for(int j = 0;j<ImageWidth(img);j++){
-      for(int k = i-1;k<i+dy;k++){
-        for(int l = j-1;l<j+dx;l++){
-          if(k<0||l<0){
-            continue;
+      mean = 0;
+      counter = 0;
+      for (int k = i-dy; k<=i+dy; k++){
+        for (int l = j-dx; l<= j+dx;l++){
+          if(k>= 0 && k<ImageHeight(img)){            //ver
+            if(l>= 0 && l<ImageWidth(img)){
+              mean += ImageGetPixel(img,l,k);
+              counter++;
+            }
           }
-          if(k>=ImageHeight(img)||l>=ImageWidth(img)){        //ver
-            continue;
-          }
-          mean += ImageGetPixel(img,l,k);
         }
       }
-      if((ImageGetPixel(img,j,i)*(mean/((2*dx+1)*(2*dy+1))))>ImageMaxval(img)){
-        ImageSetPixel(img,j,i,ImageMaxval(img));
+      if(round(mean/counter)>ImageMaxval(img)){
+        ImageSetPixel(newimg,j,i,ImageMaxval(img));
       }else{
-        ImageSetPixel(img,j,i,(ImageGetPixel(img,j,i)*(mean/((2*dx+1)*(2*dy+1)))));
+        ImageSetPixel(newimg,j,i,round(mean/counter));
       }
     }
-  }
   
+  }
+  for(int i = 0;i<ImageHeight(img);i++){
+    for(int j = 0;j<ImageWidth(img);j++){
+      ImageSetPixel(img,j,i,ImageGetPixel(newimg,j,i));
+    }
+  }
+  ImageDestroy(&newimg);
 }
 

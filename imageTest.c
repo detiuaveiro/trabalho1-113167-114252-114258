@@ -33,13 +33,13 @@ int main(int argc, char* argv[]) {
     error(2, errno, "Loading %s: %s", argv[1], ImageErrMsg());
   }
   InstrPrint(); // to print instrumentation
-  //for(int i = 0;i<ImageHeight(img1);i++){
-    //for(int j = 0;j<ImageHeight(img1);j++){
-      //uint8 p = ImageGetPixel(img1,j,i);
-      //printf("%d",p);
-    //}
-  //}
-
+  /*for(int i = 0;i<ImageHeight(img1);i++){
+    for(int j = 0;j<ImageHeight(img1);j++){
+      uint8 p = ImageGetPixel(img1,j,i);
+      printf("%d",p);
+    }
+  }*/
+  //Image img2 = ImageLoad(argv[1]);
   // Try changing the behaviour of the program by commenting/uncommenting
   // the appropriate lines.
 
@@ -51,16 +51,27 @@ int main(int argc, char* argv[]) {
   //}
   //ImageNegative(img2);
   //ImageThreshold(img2, 100);
-  //ImageBrighten(img2, 1.3);
+  //ImageBrighten(img2, 1.5);
 
-  Image img2 = ImageLoad("art4_300x300.pgm");
+  Image img2 = ImageLoad("test/blend.pgm");
   Image img3 = ImageLoad(argv[1]);
 
   //ImagePaste(img3,54,45,img2);
 
   //printf("%d",ImageLocateSubImage(img3,0,0,img2));
-  //ImageBlend(img3,0,0,img2,0.5);
-  ImageBlur(img3,5,5);
+  //ImageBlend(img2,0,0,img3,0.33);
+  ImageBlur(img3,1,1);
+
+  /*for(int i = 0;i<ImageHeight(img2);i++){
+    for(int j = 0;j<ImageWidth(img2);j++){
+      if(ImageGetPixel(img2,j,i) != ImageGetPixel(img3,j,i)){
+        printf("%d img2\n",ImageGetPixel(img2,j,i));
+        printf("%d img3\n",ImageGetPixel(img3,j,i));
+        i=ImageHeight(img2);
+        break;
+      }
+    }
+  }*/
 
   if (ImageSave(img3, argv[2]) == 0) {
     error(2, errno, "%s: %s", argv[2], ImageErrMsg());
