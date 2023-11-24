@@ -607,42 +607,117 @@ int ImageLocateSubImage(Image img1, int* px, int* py, Image img2) { ///
 /// Each pixel is substituted by the mean of the pixels in the rectangle
 /// [x-dx, x+dx]x[y-dy, y+dy].
 /// The image is changed in-place.
-void ImageBlur(Image img, int dx, int dy) {
-  assert(img != NULL);
-  assert(dx >= 0 && dy >= 0);
-
-  int width = ImageWidth(img);
-  int height = ImageHeight(img);
-  uint8_t pixeis_originais[height][width];
-
-  // Store the original pixel values in the buffer
-  for(int i = 0; i < height; i++) {
-    for(int j = 0; j < width; j++) {
-      pixeis_originais[i][j] = ImageGetPixel(img, j, i);
-    }
-  }
-
-  // Perform the blur operation using the original pixel values from the buffer
-  for(int i = 0; i < height; i++) {
-    for(int j = 0; j < width; j++) {
+void ImageBlur(Image img, int dx, int dy) { ///
+  // Insert your code here!
+  assert(img!=NULL);
+  assert(dx>=0 && dy>=0);
+  int i,j;
+  for(i = 0;i<ImageHeight(img);i++){
+    for(j = 0;j<ImageWidth(img);j++){
       int sum = 0;
       int count = 0;
-      for(int k = -dx; k <= dx; k++) {
-        for(int l = -dy; l <= dy; l++) {
-          int x = j + k;
-          int y = i + l;
-          if(ImageValidPos(img, x, y)) {
-            sum += pixeis_originais[y][x];
+      for(int k = -dy;k<=dy;k++){
+        for(int l = -dx;l<=dx;l++){
+          if(ImageValidPos(img,j+l,i+k)){
+            sum += ImageGetPixel(img,j+l,i+k);
             count++;
           }
         }
       }
-      uint8_t newPixel = round(sum / (float)count);
-      if(newPixel > ImageMaxval(img)) {
-        newPixel = ImageMaxval(img);
-      }
-      ImageSetPixel(img, j, i, newPixel);
+      if((sum/count)>ImageMaxval(img)){
+        ImageSetPixel(img,j,i,ImageMaxval(img));
+      }else{
+        ImageSetPixel(img,j,i,(sum/count)); 
+      }  //funciona
     }
   }
+
+  //int pixels_mean[ImageWidth(img)*ImageHeight(img)];
+  /*for(i=0;i<ImageWidth(img)*ImageHeight(img);i++){
+    img->pixel[i] = pixels_mean[i];
+  }
+  int iarr = 1 / (2*dy+1);
+    for(i=0; i<ImageHeight(img); i++) {
+        int ti = i*ImageWidth(img), li = ti, ri = ti+dy;
+        int fv = pixels_mean[ti], lv = pixels_mean[ti+ImageWidth(img)-1], val = (dy+1)*fv;
+        for(j=0; j<dy; j++) val += pixels_mean[ti+j];
+        for(j=0  ; j<=dy ; j++) { val += pixels_mean[ri++] - fv;   img->pixel[ti++] = round(val*iarr); }
+        for(j=dy+1; j<ImageWidth(img)-dy; j++) { val += pixels_mean[ri++] - pixels_mean[li++];   img->pixel[ti++] = round(val*iarr); }
+        for(j=ImageWidth(img)-dy; j<ImageWidth(img)  ; j++) { val += lv- pixels_mean[li++];   img->pixel[ti++] = round(val*iarr); }
+    }
+  iarr = 1/(2*dx+1);
+  for(i=0;i<ImageWidth(img);i++){
+    int ti = i,li = ti,ri = ti+dx*ImageWidth(img);
+    int fv = img->pixel[ti], lv = img->pixel[ti+ImageWidth(img)*(ImageHeight(img)-1)], val = (dx+1)*fv;
+    for(j=0;j<dx;j++){val+=img->pixel[ti+j*ImageWidth(img)];}
+    for(j=0;j<=dx;j++){val+=img->pixel[ri]-fv ; pixels_mean[ti]=round(val*iarr) ; ri+=ImageWidth(img);ti+=ImageWidth(img);}
+    for(j=dx+1;j<=ImageHeight(img)-dx;j++){val+=img->pixel[ri]-img->pixel[li]; pixels_mean[ti]=round(val*iarr); li += ImageWidth(img); ri+=ImageWidth(img);ti+=ImageWidth(img);}
+    for(j=ImageHeight(img)-dx;j<=ImageHeight(img) ;j++){val+=lv - img->pixel[li]; pixels_mean[ti]=round(val*iarr); li += ImageWidth(img);ti+=ImageWidth(img);}
+  }*/
+  /*for(i=0;i<ImageHeight(img);i++){
+    int mean = 0;
+    int count=0;
+    int ti = i, ri = ti+dx;
+    int lv = ImageGetPixel(img,ImageWidth(img)-1,i), fv = ImageGetPixel(img,0,i);
+    for(j=0;j<dx;j++){
+      if(ImageValidPos(img,j,i)){
+        mean+=ImageGetPixel(img,j,i);
+        count++;
+      }
+    }
+    pixels_mean[i*ImageWidth(img)] = round(mean/count);
+    for(j=0;j<=dx;j++){
+      if(ImageValidPos(img,ri,i)){
+        mean+=ImageGetPixel(img,ri++,i) - fv;
+        pixels_mean[i*ImageWidth(img)+j] = mean;
+        ti++;
+      }
+    } 
+    for(j=dx+1;j<ImageWidth(img)-dx;j++){
+      if(ImageValidPos(img,ri,i)&&ImageValidPos(img,ti,i)){
+        mean+=ImageGetPixel(img,ri++,i) - ImageGetPixel(img,ti,i);
+        pixels_mean[i*ImageWidth(img)+j] = mean;
+        ti++;
+      }
+    } 
+    for(j=ImageWidth(img)-dx;j<ImageWidth(img);j++){
+      if(ImageValidPos(img,ti,i)){
+        mean+=lv - ImageGetPixel(img,ti,i);
+        pixels_mean[i*ImageWidth(img)+j] = mean;
+        ti++;
+      }
+    }
+  }
+  for(i=0;i<ImageWidth(img);i++){
+    int ti = i,li = ti,ri = ti+dy*ImageWidth(img);
+    int fv = pixels_mean[ti], lv = pixels_mean[ti+ImageWidth(img)*(ImageHeight(img)-1)];
+    int mean = 0;
+    int count = 0;
+    for(j=0;j<dy;j++){
+      mean+=pixels_mean[i+j*ImageWidth(img)];
+      count++;
+    }
+    pixels_mean[i] = round(mean/count);
+    for(j=0;j<=dy;j++){
+      mean+=pixels_mean[ri]-fv; 
+      pixels_mean[ti]=mean; 
+      ri+=ImageWidth(img);
+      ti+=ImageWidth(img);
+    }
+    for(j=dy+1;j<=ImageHeight(img)-dy;j++){
+      mean+=pixels_mean[ri]-pixels_mean[li]; 
+      pixels_mean[ti]=mean; 
+      li += ImageWidth(img); 
+      ri+=ImageWidth(img);
+      ti+=ImageWidth(img);
+    }
+    for(j=ImageHeight(img)-dy;j<=ImageHeight(img);j++){
+      mean+=lv - pixels_mean[li]; 
+      pixels_mean[ti]=mean; 
+      li += ImageWidth(img);
+      ti+=ImageWidth(img);
+    }
+  }*/
+
 }
 
