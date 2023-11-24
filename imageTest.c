@@ -53,27 +53,25 @@ int main(int argc, char* argv[]) {
   //ImageThreshold(img2, 100);
   //ImageBrighten(img2, 1.5);
 
-  Image img2 = ImageLoad("test/blend.pgm");
-  Image img3 = ImageLoad(argv[1]);
+  Image img2 = ImageLoad("test/blur.pgm");
+  Image img3 = ImageLoad("blur.pgm");
 
   //ImagePaste(img3,54,45,img2);
 
   //printf("%d",ImageLocateSubImage(img3,0,0,img2));
   //ImageBlend(img2,0,0,img3,0.33);
-  ImageBlur(img3,1,1);
+  ImageBlur(img1,3,3);
 
-  /*for(int i = 0;i<ImageHeight(img2);i++){
+  for(int i = 0;i<ImageHeight(img2);i++){
     for(int j = 0;j<ImageWidth(img2);j++){
       if(ImageGetPixel(img2,j,i) != ImageGetPixel(img3,j,i)){
         printf("%d img2\n",ImageGetPixel(img2,j,i));
         printf("%d img3\n",ImageGetPixel(img3,j,i));
-        i=ImageHeight(img2);
-        break;
       }
     }
-  }*/
+  }
 
-  if (ImageSave(img3, argv[2]) == 0) {
+  if (ImageSave(img1, argv[2]) == 0) {
     error(2, errno, "%s: %s", argv[2], ImageErrMsg());
   }
 
