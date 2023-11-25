@@ -418,7 +418,7 @@ void ImageBrighten(Image img, double factor) { ///
   assert (factor >= 0.0);
   // Insert your code here!
   for(int i = 0;i<ImageHeight(img)*ImageWidth(img);i++){  // Multiplies each pixel value by the factor, if the pixel values is bigger than the maxvalue set the pixel level to the maxvalue
-    int new_pixel = roundf((img->pixel[i])*(factor));
+    uint8 new_pixel = round((img->pixel[i])*(factor));    //Rouds the because the resulting value is a double and the pixel level is a uint8
     if(new_pixel<= ImageMaxval(img)){
       img->pixel[i] = (new_pixel);
     }else{
@@ -521,9 +521,9 @@ void ImagePaste(Image img1, int x, int y, Image img2) { ///
   assert (ImageValidRect(img1, x, y, img2->width, img2->height));
   // Insert your code here!
   int i,j;
-  for(j=0;j<ImageHeight(img2);j++){
-    for(i = 0;i<ImageWidth(img2);i++){
-      ImageSetPixel(img1,x+i,y+j,ImageGetPixel(img2,i,j));    //funciona
+  for(j=0;j<ImageHeight(img2);j++){                        //Replaces pixel levels of img1 with pixel levels of img2 starting from position(x,y)
+    for(i = 0;i<ImageWidth(img2);i++){                    //until position(x+img2 width-1,j+img2 height-1).
+      ImageSetPixel(img1,x+i,y+j,ImageGetPixel(img2,i,j));    
     }
   }
 }
@@ -537,19 +537,19 @@ void ImagePaste(Image img1, int x, int y, Image img2) { ///
 void ImageBlend(Image img1, int x, int y, Image img2, double alpha) { ///
   assert (img1 != NULL);
   assert (img2 != NULL);
-  assert (ImageValidRect(img1, x, y, img2->width, img2->height));   //funciona
+  assert (ImageValidRect(img1, x, y, img2->width, img2->height));   
   // Insert your code here!
   int i,j;
   for(j=0;j<ImageHeight(img2);j++){
     for(i = 0;i<ImageWidth(img2);i++){
-      double pixel1 = ImageGetPixel(img2,i,j)*(alpha);
-      double pixel2 = ImageGetPixel(img1,x+i,j+y)*(1-alpha);
-      int new_pixel = round(pixel1+pixel2);
+      double pixel1 = ImageGetPixel(img2,i,j)*(alpha);        //Multiplies the pixel level of img2 by alpha
+      double pixel2 = ImageGetPixel(img1,x+i,j+y)*(1-alpha); //Multiplies the pixel level of img1 by 1-alpha
+      uint8 new_pixel = round(pixel1+pixel2);                 //Sums both and rounds because the new caculated pixels are doubles and the pixel level is a uint8 
       if(new_pixel<=ImageMaxval(img1)){
-        ImageSetPixel(img1,x+i,y+j,new_pixel);
-      }else{
+        ImageSetPixel(img1,x+i,y+j,new_pixel);              //Sets the pixel level to the new calculated value
+      }else{                                               //By doing this the functions blends img2 into position(x,y) of img1
         ImageSetPixel(img1,x+i,y+j,ImageMaxval(img1));
-      }    //funciona
+      }    
     }
   }
 }
@@ -565,12 +565,12 @@ int ImageMatchSubImage(Image img1, int x, int y, Image img2) { ///
   int i,j;
   for(i = 0;i<ImageHeight(img2);i++){
     for(j = 0;j<ImageWidth(img2);j++){
-      if(ImageGetPixel(img1,x+j,y+i) == ImageGetPixel(img2,j,i)){   //funciona
-        continue;
-      }else{
-        return 0;
-      }
-    }
+      if(ImageGetPixel(img1,x+j,y+i) == ImageGetPixel(img2,j,i)){   //Compares each pixel level of img1 starting in position(x,y)
+        continue;                                                   //with each pixel level of img2
+      }else{                                                        //If a the pixel levels do not match the loop is stopped
+        return 0;                                                   //and 0 is returned
+      }                                                             //If the comapared pixel levels are the same throughout the loop
+    }                                                               //returns 1.
   }
   return 1;
 }
@@ -584,14 +584,14 @@ int ImageLocateSubImage(Image img1, int* px, int* py, Image img2) { ///
   assert (img2 != NULL);
   // Insert your code here!
   int i,j;
-  for(i = 0;i<ImageHeight(img2);i++){
-    for(j = 0;j<ImageWidth(img2);j++){
-      if(ImageGetPixel(img1,j,i)==ImageGetPixel(img2,0,0)){     //funciona
-        if(ImageMatchSubImage(img1,j,i,img2)==1){
-          *px = j;
-          *py = i;
-          return 1;
-        }else{
+  for(i = 0;i<ImageHeight(img1);i++){
+    for(j = 0;j<ImageWidth(img1);j++){
+      if(ImageGetPixel(img1,j,i)==ImageGetPixel(img2,0,0)){     //Finds a pixel in img1 that has the same level of the first pixel of img2
+        if(ImageMatchSubImage(img1,j,i,img2)){               //Checks if the pixel levels from there are equal to the pixel levels of img2
+          *px = j;                                              //If so set px and py to the coordinates where the pixel level was found x and y respectively and returns 1
+          *py = i;                                              //If the pixel levels starting from that position do not equal the pixel levels of img2
+          return 1;                                             //Finds the next pixel level equal to the first pixel level of img2 and does the above again
+        }else{                                                  //If the image is not found returns 0
           continue;
         }
       }
@@ -612,30 +612,43 @@ void ImageBlur(Image img, int dx, int dy) { ///
   assert(img!=NULL);
   assert(dx>=0 && dy>=0);
   int i,j;
+  uint8 pixels_mean[ImageWidth(img)][ImageHeight(img)];
   for(i = 0;i<ImageHeight(img);i++){
-    for(j = 0;j<ImageWidth(img);j++){
-      int sum = 0;
-      int count = 0;
-      for(int k = -dy;k<=dy;k++){
-        for(int l = -dx;l<=dx;l++){
-          if(ImageValidPos(img,j+l,i+k)){
-            sum += ImageGetPixel(img,j+l,i+k);
-            count++;
-          }
-        }
-      }
-      if((sum/count)>ImageMaxval(img)){
-        ImageSetPixel(img,j,i,ImageMaxval(img));
-      }else{
-        ImageSetPixel(img,j,i,(sum/count)); 
-      }  //funciona
+    for(j = 0;j<ImageWidth(img);j++){                       //Creates an array with the pixel levels of img so the original image 
+      pixels_mean[j][i] = ImageGetPixel(img,j,i);           //does not get altered during the process and creates an undesireble result
     }
   }
 
-  //int pixels_mean[ImageWidth(img)*ImageHeight(img)];
-  /*for(i=0;i<ImageWidth(img)*ImageHeight(img);i++){
-    img->pixel[i] = pixels_mean[i];
+  for(i = 0;i<ImageHeight(img);i++){
+    for(j = 0;j<ImageWidth(img);j++){
+      int sum = 0;
+      float count = 0;                                      //Altough we will only sum 1 to count each iteration we chose to make it a float
+      for(int k = -dy;k<=dy;k++){                           //because of rounding if sum and count were both integers the result of(sum/count) would have to be an integers abd if the result was not an integer it would be converted automatically to one by making count a float the end result of the division is going to be a float too thus being able to be rounded.                                                    //
+        for(int l = -dx;l<=dx;l++){                         //For each pixel in the image calculates the mean of the pixels surrounding
+          if(ImageValidPos(img,j+l,i+k)){                   //it on an area (2*dx+1)*(2*dy+1)
+            sum += ImageGetPixel(img,j+l,i+k);              //if the positon is out of the image it is ignored and no value is added to the mean
+            count++;                                       
+          }
+        }
+      }
+      if((round(sum/count))>ImageMaxval(img)){           //If the mean is bigger than the max pixel level the pixel level is set to the maximum value
+        pixels_mean[j][i]=ImageMaxval(img);
+      }else{
+        pixels_mean[j][i]=(round(sum/count));            //Sets the pixel level to the value of the mean
+      } 
+    }
   }
+
+  for(i = 0;i<ImageHeight(img);i++){                      //Sets the pixel levels of the image to the pixel levels store in the array
+    for(j = 0;j<ImageWidth(img);j++){                     //The array was created because during the blur process the pixel levels are altered
+      ImageSetPixel(img,j,i,pixels_mean[j][i]);           //Because of that instead of adding the value of the pixel level we are adding the value of the mean
+    }                                                     //as the pixel level was already replaced by its mean in the previous iteration
+  }
+
+  //int pixels_mean[ImageWidth(img)*ImageHeight(img)];
+  /*for(i=0;i<ImageWidth(img)*ImageHeight(img);i++){      //This algorithm can be done faster if instead of doing a 2 dimensional blur we do 2 one dimensional blurs
+    img->pixel[i] = pixels_mean[i];                       //First we replace the pixel levels with the mean of the pixel levels in that line basicaly the mean of a (2*dx+1) by 1 rectangle
+  }                                                       //and after we do the same for the y axis resulting on a faster blur algorithm
   int iarr = 1 / (2*dy+1);
     for(i=0; i<ImageHeight(img); i++) {
         int ti = i*ImageWidth(img), li = ti, ri = ti+dy;
