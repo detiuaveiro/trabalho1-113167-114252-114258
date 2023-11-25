@@ -12,7 +12,7 @@
 // Student authors (fill in below):
 // NMec:  Name:
 // 113167 Gabriel Oliveira
-// 
+// 114258 Rafael Dias
 // 
 // Date:
 //
@@ -607,28 +607,42 @@ int ImageLocateSubImage(Image img1, int* px, int* py, Image img2) { ///
 /// Each pixel is substituted by the mean of the pixels in the rectangle
 /// [x-dx, x+dx]x[y-dy, y+dy].
 /// The image is changed in-place.
-void ImageBlur(Image img, int dx, int dy) { ///
-  // Insert your code here!
-  assert(img!=NULL);
-  assert(dx>=0 && dy>=0);
-  int i,j;
-  for(i = 0;i<ImageHeight(img);i++){
-    for(j = 0;j<ImageWidth(img);j++){
+void ImageBlur(Image img, int dx, int dy) {
+  assert(img != NULL);
+  assert(dx >= 0 && dy >= 0);
+
+  int width = ImageWidth(img);
+  int height = ImageHeight(img);
+  uint8_t pixeis_originais[height][width];
+
+  // Guaradr os pixeis originais
+  for(int i = 0; i < height; i++) {
+    for(int j = 0; j < width; j++) {
+      pixeis_originais[i][j] = ImageGetPixel(img, j, i);
+    }
+  }
+
+
+  // fazer blur com os pixeis originais
+  for(int i = 0; i < height; i++) {
+    for(int j = 0; j < width; j++) {
       int sum = 0;
       int count = 0;
-      for(int k = -dy;k<=dy;k++){
-        for(int l = -dx;l<=dx;l++){
-          if(ImageValidPos(img,j+l,i+k)){
-            sum += ImageGetPixel(img,j+l,i+k);
+      for(int k = -dx; k <= dx; k++) {
+        for(int l = -dy; l <= dy; l++) {
+          int x = j + k;
+          int y = i + l;
+          if(ImageValidPos(img, x, y)) {
+            sum += pixeis_originais[y][x];
             count++;
           }
         }
       }
-      if((sum/count)>ImageMaxval(img)){
-        ImageSetPixel(img,j,i,ImageMaxval(img));
-      }else{
-        ImageSetPixel(img,j,i,(sum/count)); 
-      }  //funciona
+      uint8_t newPixel = round(sum / (float)count);
+      if(newPixel > ImageMaxval(img)) {
+        newPixel = ImageMaxval(img);
+      }
+      ImageSetPixel(img, j, i, newPixel);
     }
   }
 
