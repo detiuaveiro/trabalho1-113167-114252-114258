@@ -11,7 +11,7 @@ LDLIBS = -lm
 
 PROGS = imageTool imageTest
 
-TESTS = test1 test2 test3 test4 test5 test6 test7 test8 test9
+TESTS = test1 test2 test3 test4 test5 test6 test7 test8 test9 
 
 # Default rule: make all programs
 all: $(PROGS)
@@ -74,6 +74,53 @@ test8: $(PROGS) setup
 test9: $(PROGS) setup
 	./imageTool test/original.pgm blur 7,7 save blur.pgm
 	cmp blur.pgm test/blur.pgm
+
+# testlocate5: $(PROGS) setup # media na grande
+#     ./imageTool pgm/medium/tools_2_765x460.pgm pgm/large/ireland_03_1600x1200.pgm paste 50,222 save PasteTest.pgm
+#     ./imageTool pgm/medium/tools_2_765x460.pgm PasteTest.pgm locate
+
+# testblur1: $(PROGS) setup
+#     ./imageTool pgm/medium/mandrill_512x512.pgm blur 2,9 save BlurTest.pgm
+	
+
+# Testes adicionais - Locate e Blur	
+testLocate1: $(PROGS) setup
+	./imageTool pgm/small/bird_256x256.pgm pgm/medium/mandrill_512x512.pgm paste 0,0 save babuino1.pgm
+	./imageTool pgm/small/bird_256x256.pgm babuino1.pgm tic locate toc
+
+# 
+testLocate2: $(PROGS) setup
+	./imageTool pgm/small/bird_256x256.pgm pgm/medium/mandrill_512x512.pgm paste 40,120 save babuino2.pgm
+	./imageTool pgm/small/bird_256x256.pgm babuino2.pgm tic locate toc
+
+testLocate3: $(PROGS) setup
+	./imageTool pgm/small/bird_256x256.pgm pgm/medium/mandrill_512x512.pgm paste 255,255 save babuino3.pgm
+	./imageTool pgm/small/bird_256x256.pgm babuino3.pgm tic locate toc
+
+testLocate4: $(PROGS) setup
+	./imageTool pgm/small/art3_222x217.pgm pgm/large/airfield-05_1600x1200.pgm paste 0,0 save aereos1.pgm
+	./imageTool pgm/small/art3_222x217.pgm aereos1.pgm tic locate toc
+
+testLocate5: $(PROGS) setup
+	./imageTool pgm/small/art3_222x217.pgm pgm/large/airfield-05_1600x1200.pgm paste 700,500 save aereos2.pgm
+	./imageTool pgm/small/art3_222x217.pgm aereos2.pgm tic locate toc
+
+testLocate6: $(PROGS) setup
+	./imageTool pgm/small/art3_222x217.pgm pgm/large/airfield-05_1600x1200.pgm paste 1377,982 save aereos3.pgm
+	./imageTool pgm/small/art3_222x217.pgm aereos3.pgm tic locate toc
+
+testLocate7: $(PROGS) setup
+	./imageTool pgm/small/bird_256x256.pgm pgm/medium/mandrill_512x512.pgm tic locate toc
+
+testLocate8: $(PROGS) setup
+	./imageTool birdBlur1_1.pgm pgm/medium/mandrill_512x512.pgm paste 255,255 save monkeBirb.pgm
+	./imageTool pgm/small/bird_256x256.pgm monkeBirb.pgm tic locate toc
+
+testBlur1: $(PROGS) setup
+	./imageTool pgm/medium/mandrill_512x512.pgm blur 15,0 save monkeBlur1.pgm
+
+testBlur2: $(PROGS) setup
+	./imageTool pgm/small/bird_256x256.pgm blur 1,1 save birdBlur1_1.pgm
 
 .PHONY: tests
 tests: $(TESTS)
