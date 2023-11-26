@@ -622,10 +622,10 @@ void ImageBlur(Image img, int dx, int dy) { ///
   for (i = 0; i < ImageHeight(img); i++) {
       for (j = 0; j < ImageWidth(img); j++) {
           pixels_sum[i * ImageWidth(img) + j] = ImageGetPixel(img, j, i)
-              + (i > 0 ? pixels_sum[(i - 1) * ImageWidth(img) + j] : 0)
-              + (j > 0 ? pixels_sum[i * ImageWidth(img) + j - 1] : 0)
-              - (i > 0 && j > 0 ? pixels_sum[(i - 1) * ImageWidth(img) + j - 1] : 0);
-          pixels_count[i * ImageWidth(img) + j] = 1
+              + (i > 0 ? pixels_sum[(i - 1) * ImageWidth(img) + j] : 0)                  //Calculates the mean of each pixel by using previous calculated values
+              + (j > 0 ? pixels_sum[i * ImageWidth(img) + j - 1] : 0)                    //this algorithm makes an sort of intersection between previous calculated "matrices"
+              - (i > 0 && j > 0 ? pixels_sum[(i - 1) * ImageWidth(img) + j - 1] : 0);    //and uses those values to calculate the new mean
+          pixels_count[i * ImageWidth(img) + j] = 1                                     //Stores the number of pixels used to calculate every mean of each pixel
               + (i > 0 ? pixels_count[(i - 1) * ImageWidth(img) + j] : 0)
               + (j > 0 ? pixels_count[i * ImageWidth(img) + j - 1] : 0)
               - (i > 0 && j > 0 ? pixels_count[(i - 1) * ImageWidth(img) + j - 1] : 0);
@@ -635,16 +635,16 @@ void ImageBlur(Image img, int dx, int dy) { ///
   // Compute box blur using the cumulative sum and counts
   for (i = 0; i < ImageHeight(img); i++) {
       for (j = 0; j < ImageWidth(img); j++) {
-          int x1 = MAX(0, j - dx);
-          int x2 = MIN(ImageWidth(img) - 1, j + dx);
-          int y1 = MAX(0, i - dy);
-          int y2 = MIN(ImageHeight(img) - 1, i + dy);
+          int x1 = MAX(0, j - dx);                              //These operations do are used to find the first valid position
+          int x2 = MIN(ImageWidth(img) - 1, j + dx);            //in case of some indexes being out of bounds
+          int y1 = MAX(0, i - dy);                              //for example corner cases
+          int y2 = MIN(ImageHeight(img) - 1, i + dy);         
 
           int sum = pixels_sum[y2 * ImageWidth(img) + x2]
-              - (x1 > 0 ? pixels_sum[y2 * ImageWidth(img) + x1 - 1] : 0)
-              - (y1 > 0 ? pixels_sum[(y1 - 1) * ImageWidth(img) + x2] : 0)
+              - (x1 > 0 ? pixels_sum[y2 * ImageWidth(img) + x1 - 1] : 0)                     //Calculates each pixel mean by using the previous calculated values instead of calculating them for every iteration
+              - (y1 > 0 ? pixels_sum[(y1 - 1) * ImageWidth(img) + x2] : 0)                        
               + (x1 > 0 && y1 > 0 ? pixels_sum[(y1 - 1) * ImageWidth(img) + x1 - 1] : 0);
-          float count = pixels_count[y2 * ImageWidth(img) + x2]
+          float count = pixels_count[y2 * ImageWidth(img) + x2]                              //Count is an float for the same reasons pointed below in the normal blur algorithm comments
               - (x1 > 0 ? pixels_count[y2 * ImageWidth(img) + x1 - 1] : 0)
               - (y1 > 0 ? pixels_count[(y1 - 1) * ImageWidth(img) + x2] : 0)
               + (x1 > 0 && y1 > 0 ? pixels_count[(y1 - 1) * ImageWidth(img) + x1 - 1] : 0);

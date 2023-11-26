@@ -53,17 +53,22 @@ int main(int argc, char* argv[]) {
   //ImageThreshold(img2, 100);
   //ImageBrighten(img2, 1.5);
 
-  Image img2 = ImageLoad("test/paste.pgm");
+  Image img2 = ImageLoad("airfield-05_1600x1200.pgm");
   Image img3 = ImageLoad("bird_256x256.pgm");
+  for(int i = 0;i<ImageHeight(img2);i++){
+    for(int j = 0;j<ImageWidth(img2);j++){
+      ImageSetPixel(img2,j,i,ImageGetPixel(img3,0,0));
+    }
+  } 
 
   //ImagePaste(img2,675,475,img3);
-  //int a;
-  //int b;
+  int a;
+  int b;
   //printf("%d\n",ImageMatchSubImage(img2,675,475,img3));
-  //printf("%d\n",ImageLocateSubImage(img2,&a,&b,img3));
+  printf("%d\n",ImageLocateSubImage(img2,&a,&b,img3));
   //printf("%d\n%d\n",a,b);
   //ImageBlend(img2,0,0,img3,0.33);
-  ImageBlur(img3,3,3);
+  //ImageBlur(img3,3,3);
 
  /*for(int i = 0;i<ImageHeight(img2);i++){
     for(int j = 0;j<ImageWidth(img2);j++){
@@ -74,7 +79,7 @@ int main(int argc, char* argv[]) {
     }
   }*/
 
-  if (ImageSave(img3, argv[2]) == 0) {
+  if (ImageSave(img2, argv[2]) == 0) {
     error(2, errno, "%s: %s", argv[2], ImageErrMsg());
   }
 
