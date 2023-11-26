@@ -611,50 +611,109 @@ void ImageBlur(Image img, int dx, int dy) { ///
   // Insert your code here!
   assert(img!=NULL);
   assert(dx>=0 && dy>=0);
-  int i,j;
+  InstrReset();
 
 
-  // Improved blur function
-  int pixels_sum[ImageWidth(img) * ImageHeight(img)];
-  int pixels_count[ImageWidth(img) * ImageHeight(img)];
+// Calcular a média dos pixels em uma janela ao redor de cada pixel
+int w = ImageWidth(img);
+int h = ImageHeight(img);
+int pixels_sum[w * h];
+int pixels_count[w * h];
 
-  // Compute cumulative sum of the image pixels and counts
-  for (i = 0; i < ImageHeight(img); i++) {
-      for (j = 0; j < ImageWidth(img); j++) {
-          pixels_sum[i * ImageWidth(img) + j] = ImageGetPixel(img, j, i)
-              + (i > 0 ? pixels_sum[(i - 1) * ImageWidth(img) + j] : 0)                  //Calculates the mean of each pixel by using previous calculated values
-              + (j > 0 ? pixels_sum[i * ImageWidth(img) + j - 1] : 0)                    //this algorithm makes an sort of intersection between previous calculated "matrices"
-              - (i > 0 && j > 0 ? pixels_sum[(i - 1) * ImageWidth(img) + j - 1] : 0);    //and uses those values to calculate the new mean
-          pixels_count[i * ImageWidth(img) + j] = 1                                     //Stores the number of pixels used to calculate every mean of each pixel
-              + (i > 0 ? pixels_count[(i - 1) * ImageWidth(img) + j] : 0)
-              + (j > 0 ? pixels_count[i * ImageWidth(img) + j - 1] : 0)
-              - (i > 0 && j > 0 ? pixels_count[(i - 1) * ImageWidth(img) + j - 1] : 0);
-      }
-  }
+// Compute cumulative sum of the image pixels and counts
+for (int i = 0; i < h; i++) {
+    for (int j = 0; j < w; j++) {
+        int current_pixel_sum = ImageGetPixel(img, j, i);
 
-  // Compute box blur using the cumulative sum and counts
-  for (i = 0; i < ImageHeight(img); i++) {
-      for (j = 0; j < ImageWidth(img); j++) {
-          int x1 = MAX(0, j - dx);                              //These operations do are used to find the first valid position
-          int x2 = MIN(ImageWidth(img) - 1, j + dx);            //in case of some indexes being out of bounds
-          int y1 = MAX(0, i - dy);                              //for example corner cases
-          int y2 = MIN(ImageHeight(img) - 1, i + dy);         
+        int sum_left = 0;
+        if (j > 0) {
+            InstrCount[1] += 1;
+            sum_left = pixels_sum[i * w + j - 1];
+        }
 
-          int sum = pixels_sum[y2 * ImageWidth(img) + x2]
-              - (x1 > 0 ? pixels_sum[y2 * ImageWidth(img) + x1 - 1] : 0)                     //Calculates each pixel mean by using the previous calculated values instead of calculating them for every iteration
-              - (y1 > 0 ? pixels_sum[(y1 - 1) * ImageWidth(img) + x2] : 0)                        
-              + (x1 > 0 && y1 > 0 ? pixels_sum[(y1 - 1) * ImageWidth(img) + x1 - 1] : 0);
-          float count = pixels_count[y2 * ImageWidth(img) + x2]                              //Count is an float for the same reasons pointed below in the normal blur algorithm comments
-              - (x1 > 0 ? pixels_count[y2 * ImageWidth(img) + x1 - 1] : 0)
-              - (y1 > 0 ? pixels_count[(y1 - 1) * ImageWidth(img) + x2] : 0)
-              + (x1 > 0 && y1 > 0 ? pixels_count[(y1 - 1) * ImageWidth(img) + x1 - 1] : 0);
-          ImageSetPixel(img, j, i, MIN(round(sum / count), ImageMaxval(img)));
-      }
+        int sum_up = 0;
+        if (i > 0) {
+            InstrCount[1] += 1;
+            sum_up = pixels_sum[(i - 1) * w + j];
+        }
+
+        int sum_diagonal = 0;
+        if (i > 0 && j > 0) {
+            InstrCount[1] += 1;
+            sum_diagonal = pixels_sum[(i - 1) * w + j - 1];
+        }
+        InstrCount[1] += 3;
+        pixels_sum[i * w + j] = current_pixel_sum + sum_up + sum_left - sum_diagonal;
+
+        int current_pixel_count = 1;
+
+        int count_left = 0;
+        if (j > 0) {
+            InstrCount[1] += 1;
+            count_left = pixels_count[i * w + j - 1];
+        }
+
+        int count_up = 0;
+        if (i > 0) {
+            InstrCount[1] += 1;
+            count_up = pixels_count[(i - 1) * w + j];
+        }
+
+        int count_diagonal = 0;
+        if (i > 0 && j > 0) {
+            InstrCount[1] += 1;
+            count_diagonal = pixels_count[(i - 1) * w + j - 1];
+        }
+        InstrCount[1] += 3;
+        pixels_count[i * w + j] = current_pixel_count + count_up + count_left - count_diagonal;
+    }
 }
 
+for (int i = 0; i < h; i++) {
+    for (int j = 0; j < w; j++) {
+        int x1 = max(0, j - dx);
+        int x2 = min(w - 1, j + dx);
+        int y1 = max(0, i - dy);
+        int y2 = min(h - 1, i + dy);
+
+        int sum = pixels_sum[y2 * w + x2];
+        if (x1 > 0) {
+          InstrCount[1] += 1;
+          sum -= pixels_sum[y2 * w + x1 - 1];
+        }
+        if (y1 > 0) {
+          InstrCount[1] += 1;
+          sum -= pixels_sum[(y1 - 1) * w + x2];
+        }
+        if (x1 > 0 && y1 > 0) {
+          InstrCount[1] += 1;
+          sum += pixels_sum[(y1 - 1) * w + x1 - 1];
+        }
+
+        int count = pixels_count[y2 * w + x2];
+        if (x1 > 0){
+          InstrCount[1] += 1;
+          count -= pixels_count[y2 * w + x1 - 1];
+        }
+        if (y1 > 0) {
+          InstrCount[1] += 1;
+          count -= pixels_count[(y1 - 1) * w + x2];
+        }
+        if (x1 > 0 && y1 > 0) {
+          InstrCount[1] += 1;
+          count += pixels_count[(y1 - 1) * w + x1 - 1];
+        }
+
+        int mean = round((float)sum / count);
+        ImageSetPixel(img, j, i, min(mean, ImageMaxval(img)));
+    }
+} 
+}
+
+
 // versão anterior com n^4 de complexidade
-//Remove comments to test and comment the above loops. 
- /*uint8 pixels_mean[ImageWidth(img)][ImageHeight(img)];
+/*  uint8 pixels_mean[ImageWidth(img)][ImageHeight(img)];
+  int i,j;
   for(i = 0;i<ImageHeight(img);i++){
     for(j = 0;j<ImageWidth(img);j++){                       //Creates an array with the pixel levels of img so the original image 
       pixels_mean[j][i] = ImageGetPixel(img,j,i);           //does not get altered during the process and creates an undesireble result
@@ -668,11 +727,13 @@ void ImageBlur(Image img, int dx, int dy) { ///
       for(int k = -dy;k<=dy;k++){                           //because of rounding if sum and count were both integers the result of(sum/count) would have to be an integers abd if the result was not an integer it would be converted automatically to one by making count a float the end result of the division is going to be a float too thus being able to be rounded.                                                    //
         for(int l = -dx;l<=dx;l++){                         //For each pixel in the image calculates the mean of the pixels surrounding
           if(ImageValidPos(img,j+l,i+k)){                   //it on an area (2*dx+1)*(2*dy+1)
+            InstrCount[1] += 1;                               
             sum += ImageGetPixel(img,j+l,i+k);              //if the positon is out of the image it is ignored and no value is added to the mean
             count++;                                       
           }
         }
       }
+      InstrCount[1] += 1;
       if((round(sum/count))>ImageMaxval(img)){           //If the mean is bigger than the max pixel level the pixel level is set to the maximum value
         pixels_mean[j][i]=ImageMaxval(img);
       }else{
@@ -686,6 +747,6 @@ void ImageBlur(Image img, int dx, int dy) { ///
       ImageSetPixel(img,j,i,pixels_mean[j][i]);           //Because of that instead of adding the value of the pixel level we are adding the value of the mean
     }                                                     //as the pixel level was already replaced by its mean in the previous iteration
   }
-*/
-}
+  printf("InstrCount[1] = %lu\n", InstrCount[1]);
 
+} */
