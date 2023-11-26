@@ -671,5 +671,40 @@ for (int i = 0; i < h; i++) {
     }
 }
 
+// versão anterior com n^4 de complexidade
+/*int i,j;
+  uint8 pixels_mean[ImageWidth(img)][ImageHeight(img)];
+  for(i = 0;i<ImageHeight(img);i++){
+    for(j = 0;j<ImageWidth(img);j++){                       //Creates an array with the pixel levels of img so the original image 
+      pixels_mean[j][i] = ImageGetPixel(img,j,i);           //does not get altered during the process and creates an undesireble result
+    }
+  }
+
+  for(i = 0;i<ImageHeight(img);i++){
+    for(j = 0;j<ImageWidth(img);j++){
+      int sum = 0;
+      float count = 0;                                      //Altough we will only sum 1 to count each iteration we chose to make it a float
+      for(int k = -dy;k<=dy;k++){                           //because of rounding if sum and count were both integers the result of(sum/count) would have to be an integers abd if the result was not an integer it would be converted automatically to one by making count a float the end result of the division is going to be a float too thus being able to be rounded.                                                    //
+        for(int l = -dx;l<=dx;l++){                         //For each pixel in the image calculates the mean of the pixels surrounding
+          if(ImageValidPos(img,j+l,i+k)){                   //it on an area (2*dx+1)*(2*dy+1)
+            sum += ImageGetPixel(img,j+l,i+k);              //if the positon is out of the image it is ignored and no value is added to the mean
+            count++;                                       
+          }
+        }
+      }
+      if((round(sum/count))>ImageMaxval(img)){           //If the mean is bigger than the max pixel level the pixel level is set to the maximum value
+        pixels_mean[j][i]=ImageMaxval(img);
+      }else{
+        pixels_mean[j][i]=(round(sum/count));            //Sets the pixel level to the value of the mean
+      } 
+    }
+  }
+
+  for(i = 0;i<ImageHeight(img);i++){                      //Sets the pixel levels of the image to the pixel levels store in the array
+    for(j = 0;j<ImageWidth(img);j++){                     //The array was created because during the blur process the pixel levels are altered
+      ImageSetPixel(img,j,i,pixels_mean[j][i]);           //Because of that instead of adding the value of the pixel level we are adding the value of the mean
+    }                                                     //as the pixel level was already replaced by its mean in the previous iteration
+  }
+*/
 }
 
